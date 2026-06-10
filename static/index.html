@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feed Overlay - банери з фіда</title>
+<style>
+  :root{
+    --ink:#101114; --paper:#fbfbf9; --line:#e3e2dd;
+    --cobalt:#2553c7; --muted:#7a7a74; --ok:#1d7a3f; --err:#b3261e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);
+    font:15px/1.55 "Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:40px 24px 80px}
+  header{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:36px}
+  .logo{font-weight:700;letter-spacing:.35em;font-size:15px;text-transform:uppercase}
+  .logo span{color:var(--cobalt)}
+  header small{color:var(--muted)}
+  h2{font-family:Georgia,serif;font-style:italic;font-weight:400;font-size:22px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:36px}
+  @media(max-width:840px){.grid{grid-template-columns:1fr}}
+
+  .drop{border:1.5px dashed var(--line);background:#fff;border-radius:4px;
+    padding:46px 24px;text-align:center;cursor:pointer;transition:border-color .15s}
+  .drop:hover,.drop.over{border-color:var(--cobalt)}
+  .drop b{display:block;font-family:Georgia,serif;font-style:italic;font-size:19px;font-weight:400}
+  .drop small{color:var(--muted)}
+  .drop .file{margin-top:10px;color:var(--cobalt);font-weight:600}
+
+  fieldset{border:0;margin-top:22px}
+  label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);margin:14px 0 5px}
+  input[type=text],input[type=number]{width:100%;padding:9px 11px;border:1px solid var(--line);
+    background:#fff;border-radius:3px;font:inherit}
+  input:focus{outline:2px solid var(--cobalt);outline-offset:1px;border-color:transparent}
+  .row{display:flex;gap:12px}.row>div{flex:1}
+  .check{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:14px;color:var(--ink)}
+  .check input{width:16px;height:16px;accent-color:var(--cobalt)}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+  button.primary{margin-top:26px;width:100%;padding:13px;border:0;border-radius:3px;
+    background:var(--ink);color:#fff;font:600 14px/1 inherit;letter-spacing:.05em;
+    text-transform:uppercase;cursor:pointer}
+  button.primary:hover{background:var(--cobalt)}
+  button.primary:disabled{background:#bbb;cursor:default}
+
+  .preview{background:#fff;border:1px solid var(--line);border-radius:4px;padding:18px}
+  .preview h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
+  .mock{position:relative;aspect-ratio:3/4;background:linear-gradient(160deg,#d9d6cf,#aaa49a);
+    border-radius:3px;overflow:hidden;color:#fff}
+  .mock .b{position:absolute;top:14px;left:14px;font-weight:700;letter-spacing:.3em;
+    font-size:11px;color:#666;text-transform:uppercase}
+  .mock .grad{position:absolute;inset:auto 0 0 0;height:34%;
+    background:linear-gradient(transparent,rgba(20,20,20,.45))}
+  .mock .t{position:absolute;left:14px;bottom:44px;font-family:Georgia,serif;
+    font-style:italic;font-size:15px;max-width:62%}
+  .mock .p{position:absolute;right:14px;bottom:44px;font-family:Georgia,serif;
+    font-style:italic;font-weight:700;font-size:16px}
+  .mock .s{position:absolute;left:14px;bottom:12px;border:1.5px solid #fff;
+    padding:3px 8px;font-size:10.5px;letter-spacing:.06em}
+
+  .progress{display:none;margin-top:34px}
+  .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--cobalt);transition:width .4s}
+  .progress p{margin-top:8px;color:var(--muted);font-size:13.5px}
+
+  table{display:none;width:100%;margin-top:26px;border-collapse:collapse;background:#fff;
+    border:1px solid var(--line);font-size:13.5px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+  td img{width:44px;height:58px;object-fit:cover;border-radius:2px;background:#eee}
+  .st-done{color:var(--ok);font-weight:600}.st-error{color:var(--err)}
+  td a{color:var(--cobalt);word-break:break-all}
+  .export{display:none;margin-top:18px;gap:10px}
+  .export a{display:inline-block;padding:10px 16px;border:1.5px solid var(--ink);
+    border-radius:3px;color:var(--ink);text-decoration:none;font-weight:600;font-size:13px;margin-right:10px}
+  .export a:hover{border-color:var(--cobalt);color:var(--cobalt)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">Feed <span>/</span> Overlay</div>
+    <small>title · size · price → банер з фіда</small>
+  </header>
+
+  <div class="grid">
+    <div>
+      <h2>Згенерувати банери з товарного фіда</h2>
+
+      <div class="drop" id="drop">
+        <b>Перетягни фід сюди або клікни</b>
+        <small>XML (Merchant Center), CSV або XLSX. Потрібні колонки: id, title, image_link.
+        size, price, sale_price - опційно.</small>
+        <div class="file" id="fileName"></div>
+        <input type="file" id="file" hidden accept=".xml,.csv,.xlsx,.tsv,.txt">
+      </div>
+
+      <fieldset>
+        <div class="row">
+          <div>
+            <label for="brand">Бренд (зверху зліва)</label>
+            <input type="text" id="brand" placeholder="ETNODIM">
+          </div>
+          <div>
+            <label for="limit">Ліміт товарів (0 = всі)</label>
+            <input type="number" id="limit" value="0" min="0">
+          </div>
+        </div>
+        <div class="check">
+          <input type="checkbox" id="gradient" checked>
+          <span>Градієнт знизу для читабельності тексту</span>
+        </div>
+        <div class="check">
+          <input type="checkbox" id="useClaude">
+          <span>Чистити назви через Claude</span>
+        </div>
+        <p class="hint">Claude скоротить title під банер і дістане розміри з назви, якщо атрибут size пустий. Потребує ANTHROPIC_API_KEY на сервері.</p>
+
+        <button class="primary" id="run" disabled>Запустити обробку</button>
+      </fieldset>
+
+      <div class="progress" id="progress">
+        <div class="bar"><i id="barFill"></i></div>
+        <p id="progressText"></p>
+      </div>
+
+      <div class="export" id="export">
+        <a id="dlCsv" href="#">Завантажити фід CSV</a>
+        <a id="dlXml" href="#">Завантажити фід XML</a>
+      </div>
+
+      <table id="results">
+        <thead><tr><th>Прев'ю</th><th>ID</th><th>Назва</th><th>Статус</th><th>Нове посилання</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <aside class="preview">
+      <h3>Макет накладання</h3>
+      <div class="mock">
+        <div class="b" id="pvBrand">ETNODIM</div>
+        <div class="grad"></div>
+        <div class="t">"Vesnoviy" short-sleeved blouse</div>
+        <div class="p">261$</div>
+        <div class="s">XXS | XS | S | M | L</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let feedFile = null, poll = null;
+
+$('drop').onclick = () => $('file').click();
+$('drop').ondragover = e => { e.preventDefault(); $('drop').classList.add('over'); };
+$('drop').ondragleave = () => $('drop').classList.remove('over');
+$('drop').ondrop = e => {
+  e.preventDefault(); $('drop').classList.remove('over');
+  if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+};
+$('file').onchange = e => { if (e.target.files.length) setFile(e.target.files[0]); };
+$('brand').oninput = e => $('pvBrand').textContent = e.target.value.toUpperCase() || 'BRAND';
+
+function setFile(f){ feedFile = f; $('fileName').textContent = f.name; $('run').disabled = false; }
+
+$('run').onclick = async () => {
+  const fd = new FormData();
+  fd.append('feed', feedFile);
+  fd.append('brand', $('brand').value);
+  fd.append('gradient', $('gradient').checked);
+  fd.append('use_claude', $('useClaude').checked);
+  fd.append('limit', $('limit').value || 0);
+
+  $('run').disabled = true;
+  const r = await fetch('/api/jobs', { method:'POST', body: fd });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({detail:'Помилка сервера'}));
+    alert(err.detail); $('run').disabled = false; return;
+  }
+  const { job_id } = await r.json();
+  $('progress').style.display = 'block';
+  $('dlCsv').href = `/api/jobs/${job_id}/feed.csv`;
+  $('dlXml').href = `/api/jobs/${job_id}/feed.xml`;
+  poll = setInterval(() => check(job_id), 1200);
+};
+
+async function check(jobId){
+  const r = await fetch(`/api/jobs/${jobId}`);
+  const j = await r.json();
+  const pct = j.total ? Math.round(j.processed / j.total * 100) : 0;
+  $('barFill').style.width = pct + '%';
+  $('progressText').textContent = `Оброблено ${j.processed} з ${j.total}`;
+  renderRows(j.items);
+  if (j.status === 'done') {
+    clearInterval(poll);
+    $('progressText').textContent = `Готово: ${j.items.filter(i=>i.status==='done').length} ок, ${j.items.filter(i=>i.status==='error').length} з помилками`;
+    $('export').style.display = 'block';
+    $('run').disabled = false;
+  }
+}
+
+function renderRows(items){
+  const tb = $('results').querySelector('tbody');
+  tb.innerHTML = items.map(it => `
+    <tr>
+      <td>${it.new_image_link ? `<img src="${it.new_image_link}" loading="lazy">` : ''}</td>
+      <td>${it.id}</td>
+      <td>${it.title}</td>
+      <td class="st-${it.status}">${it.status === 'done' ? 'готово' : it.status === 'error' ? 'помилка' : '…'}</td>
+      <td>${it.new_image_link ? `<a href="${it.new_image_link}" target="_blank">${it.new_image_link}</a>` : (it.error || '')}</td>
+    </tr>`).join('');
+  $('results').style.display = 'table';
+}
+</script>
+</body>
+</html>
