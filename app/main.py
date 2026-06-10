@@ -198,6 +198,11 @@ os.makedirs(media_dir, exist_ok=True)
 app.mount("/media", StaticFiles(directory=media_dir), name="media")
 
 
+@app.get("/healthz")
+async def healthz():
+    return {"ok": True}
+
+
 @app.get("/")
 async def index():
     return FileResponse(os.path.join(os.path.dirname(__file__), "..", "static", "index.html"))
